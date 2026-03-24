@@ -1,0 +1,158 @@
+name: 📰 Run Newspaper
+
+on:
+  schedule:
+    # Her gün 08:00 UTC (Türkiye 11:00)
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+    inputs:
+      max_turns:
+        description: 'Claude Code max turns'
+        required: false
+        default: '15'
+      hours:
+        description: 'Kac saatlik icerikleri tara'
+        required: false
+        default: '24'
+
+permissions:
+  contents: write
+
+jobs:
+  daily-digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      DATE: ''
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🛠️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 📦 Install Dependencies
+        run: npm ci
+
+      - name: 🔍 Idempotency Check
+        id: check
+        run: |
+          DATE=$(date -u +%Y-%m-%d)
+          YEAR=$(date -u +%Y)
+          MONTH=$(date -u +%m)
+          DAY=$(date -u +%d)
+          HOUR=$(date -u +%H)
+
+          if [ "$HOUR" -lt 12 ]; then
+            PERIOD="morning"
+          elif [ "$HOUR" -lt 18 ]; then
+            PERIOD="afternoon"
+          else
+            PERIOD="evening"
+          fi
+
+          DIGEST_PATH="digests/${YEAR}/${MONTH}/${DAY}/${PERIOD}.md"
+
+          echo "DATE=${DATE}" >> $GITHUB_ENV
+          echo "DIGEST_PATH=${DIGEST_PATH}" >> $GITHUB_ENV
+
+          if [ -f "${DIGEST_PATH}" ]; then
+            echo "⚠️ Digest already exists: ${DIGEST_PATH}, skipping."
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 📡 Fetch RSS Feeds
+        if: steps.check.outputs.skip != 'true'
+        id: fetch
+        run: |
+          HOURS=${{ github.event.inputs.hours || '24' }}
+          node scripts/fetch-feeds.js --hours "${HOURS}"
+
+          # raw-feeds.md bos veya cok kucukse hata
+          if [ ! -s "raw-feeds.md" ]; then
+            echo "❌ Feed fetch failed — raw-feeds.md is empty"
+            exit 1
+          fi
+
+          ARTICLE_COUNT=$(grep -c "^### " raw-feeds.md || true)
+          echo "article_count=${ARTICLE_COUNT}" >> $GITHUB_OUTPUT
+          echo "📊 ${ARTICLE_COUNT} makale cekildi"
+
+      - name: 📰 Generate Daily Digest
+        if: steps.check.outputs.skip != 'true' && steps.fetch.outputs.article_count != '0'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          MAX_TURNS=${{ github.event.inputs.max_turns || '15' }}
+
+          echo "📰 Generating newspaper for ${DATE}..."
+
+          mkdir -p digests
+
+          claude -p "/daily-digest" \
+            --dangerously-skip-permissions \
+            --max-turns "${MAX_TURNS}" \
+            > /dev/null 2>&1
+
+          # Claude DIGEST_PATH'e yaziyor, kontrol et
+          if [ ! -s "${DIGEST_PATH}" ]; then
+            echo "❌ Digest generation failed — ${DIGEST_PATH} is empty"
+            exit 1
+          fi
+
+          echo "✅ Digest generated: ${DIGEST_PATH}"
+          echo "📊 Size: $(wc -l < "${DIGEST_PATH}") lines"
+
+      - name: 🧹 Cleanup
+        if: always()
+        run: rm -f raw-feeds.md
+
+      - name: 📤 Commit & Push
+        if: steps.check.outputs.skip != 'true'
+        run: |
+          git config user.name "newspaper-bot"
+          git config user.email "newspaper-bot@users.noreply.github.com"
+          git add digests/
+          git diff --staged --quiet || {
+            git commit -m "📰 ${DATE} daily digest"
+            git push
+          }
+
+      - name: 📧 Send Email
+        if: steps.check.outputs.skip != 'true' && success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "📰 The Newspaper — ${{ env.DATE }}"
+          to: ${{ secrets.NOTIFICATION_EMAIL }}
+          from: "The Newspaper <${{ secrets.MAIL_USERNAME }}>"
+          html_body: file://${{ env.DIGEST_PATH }}
+          convert_markdown: true
+
+      - name: 📊 Summary
+        if: always()
+        run: |
+          if [ -f "${DIGEST_PATH}" ]; then
+            echo "## 📰 The Newspaper — ${DATE}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            head -30 "${DIGEST_PATH}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "---" >> $GITHUB_STEP_SUMMARY
+            echo "*Full digest: ${DIGEST_PATH}*" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.check.outputs.skip }}" = "true" ]; then
+            echo "⚠️ Digest already existed: ${DIGEST_PATH}" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.fetch.outputs.article_count }}" = "0" ]; then
+            echo "📭 No new articles found for ${DATE}." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Digest generation failed for ${DATE}" >> $GITHUB_STEP_SUMMARY
+          fi

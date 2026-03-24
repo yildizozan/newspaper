@@ -1,0 +1,14 @@
+{
+  "name": "newspaper",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Daily Dev Digest — RSS feed aggregator powered by Claude",
+  "scripts": {
+    "fetch": "node scripts/fetch-feeds.js",
+    "test:feeds": "node scripts/test-feeds.js"
+  },
+  "dependencies": {
+    "rss-parser": "^3.13.0"
+  }
+}
