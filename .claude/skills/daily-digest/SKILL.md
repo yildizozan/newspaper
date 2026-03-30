@@ -7,6 +7,11 @@ description: >
 allowed-tools: Read, Write
 ---
 
+> **Araç Notu:** Bu prompt Gemini CLI ile çalıştırılır.
+> `raw-feeds.md` dosyasını oku (ReadFile aracı), özeti oluştur,
+> ardından ilgili `digests/YYYY/MM/DD/PERIOD.md` dosyasına yaz (WriteFile aracı).
+> Başka araç kullanma.
+
 # 📰 The Newspaper — Günlük Dev Digest
 
 Önceden çekilmiş RSS feed verilerini okuyarak Türkçe günlük özet oluştur.

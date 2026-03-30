@@ -6,10 +6,6 @@ on:
     - cron: '0 8 * * *'
   workflow_dispatch:
     inputs:
-      max_turns:
-        description: 'Claude Code max turns'
-        required: false
-        default: '15'
       hours:
         description: 'Kac saatlik icerikleri tara'
         required: false
@@ -38,8 +34,8 @@ jobs:
       - name: 📦 Install Dependencies
         run: npm ci
 
-      - name: 🤖 Install Claude Code
-        run: npm install -g @anthropic-ai/claude-code
+      - name: 🤖 Install Gemini CLI
+        run: npm install -g @google/gemini-cli
 
       - name: 🔍 Idempotency Check
         id: check
@@ -90,19 +86,15 @@ jobs:
       - name: 📰 Generate Daily Digest
         if: steps.check.outputs.skip != 'true' && steps.fetch.outputs.article_count != '0'
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          MAX_TURNS=${{ github.event.inputs.max_turns || '15' }}
-
           echo "📰 Generating newspaper for ${DATE}..."
 
           mkdir -p digests
 
-          claude -p "/daily-digest" \
-            --dangerously-skip-permissions \
-            --max-turns "${MAX_TURNS}"
+          gemini --prompt "$(cat .claude/skills/daily-digest/SKILL.md)" --yolo
 
-          # Claude DIGEST_PATH'e yaziyor, kontrol et
+          # Gemini DIGEST_PATH'e yaziyor, kontrol et
           if [ ! -s "${DIGEST_PATH}" ]; then
             echo "❌ Digest generation failed — ${DIGEST_PATH} is empty"
             exit 1
