@@ -179,7 +179,13 @@
         { "name": "Keptn Lifecycle", "url": "https://lifecycle.keptn.sh/blog/index.xml" },
         { "name": "OpenFeature Blog", "url": "https://openfeature.dev/blog/rss.xml" },
         { "name": "The New Stack — Storage", "url": "https://thenewstack.io/storage/feed" },
-        { "name": "The New Stack — Open Source", "url": "https://thenewstack.io/open-source/feed" }
+        { "name": "The New Stack — Open Source", "url": "https://thenewstack.io/open-source/feed" },
+        { "name": "The New Stack — WebAssembly", "url": "https://thenewstack.io/webassembly/feed" },
+        { "name": "The New Stack — Containers", "url": "https://thenewstack.io/containers/feed" },
+        { "name": "Rook Blog", "url": "https://blog.rook.io/feed" },
+        { "name": "NATS Blog", "url": "https://nats.io/blog/index.xml" },
+        { "name": "gRPC Blog", "url": "https://www.grpc.io/blog/index.xml" },
+        { "name": "Ambassador / Emissary Blog", "url": "https://www.getambassador.io/blog/feed.xml" }
       ]
     },
     {
