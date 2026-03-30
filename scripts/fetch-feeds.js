@@ -48,8 +48,7 @@ function stripHtml(html) {
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 500);
+    .trim();
 }
 
 function withTimeout(promise, ms) {
