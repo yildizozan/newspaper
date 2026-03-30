@@ -201,7 +201,11 @@
         { "name": "CNCF Contributors Blog", "url": "https://contribute.cncf.io/blog/rss.xml" },
         { "name": "CNCF TAG Security", "url": "https://tag-security.cncf.io/blog/index.xml" },
         { "name": "Codefresh Blog", "url": "https://codefresh.io/blog/feed/" },
-        { "name": "Argo Project Blog", "url": "https://medium.com/feed/argo-project" }
+        { "name": "Argo Project Blog", "url": "https://medium.com/feed/argo-project" },
+        { "name": "Sigstore Blog", "url": "https://medium.com/feed/sigstore" },
+        { "name": "in-toto Blog", "url": "https://in-toto.io/blog/index.xml" },
+        { "name": "VictoriaMetrics Blog", "url": "https://victoriametrics.medium.com/feed" },
+        { "name": "Kubewarden Blog", "url": "https://kubewarden.io/blog/index.xml" }
       ]
     },
     {
