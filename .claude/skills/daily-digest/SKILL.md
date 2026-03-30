@@ -21,6 +21,21 @@ allowed-tools: Read, Write
 `raw-feeds.md` dosyasını oku. Bu dosya tüm RSS feed'lerinden çekilmiş
 son 24 saatin makalelerini içerir.
 
+> **KURAL — Zaman Dilimine Göre İçerik Filtresi:**
+>
+> Hangi digest'i oluşturduğuna göre aşağıdaki zaman aralığını kullan:
+>
+> | Digest | Kapsanan Zaman Aralığı (UTC) |
+> |--------|------------------------------|
+> | `morning` (00:00–11:59) | Yalnızca **bugün 00:00–11:59** arası yayınlananlar |
+> | `afternoon` (12:00–17:59) | Yalnızca **bugün 12:00–17:59** arası yayınlananlar |
+> | `evening` (18:00–23:59) | Yalnızca **bugün 18:00–23:59** arası yayınlananlar |
+>
+> - Sabah digestında bir önceki günün içerikleri **kesinlikle eklenmez**
+> - Öğle digestında sabah saatlerindeki (00:00–11:59) içerikler **eklenmez**
+> - Akşam digestında öğle saatlerindeki (12:00–17:59) içerikler **eklenmez**
+> - Tarihi `N/A` olan makaleler **atlanır**
+
 ## Adım 2: Analiz Et ve Önceliklendirme Yap
 
 Makaleleri şu öncelik sırasına göre sınıflandır:

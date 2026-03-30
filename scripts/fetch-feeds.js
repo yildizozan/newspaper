@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 // rss-parser icindeki url.parse() uyarisini sustur (DEP0169)
 process.removeAllListeners('warning');
+// SSL sertifika dogrulamasini devre disi birak (bazi public RSS feed'leri icin gerekli)
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 /**
  * RSS feed'leri ceker, son 24 saati filtreler, temiz markdown olarak yazar.
  * Claude'un sadece ozetleme yapmasini saglar — fetch + parse isini bu script yapar.
@@ -11,6 +13,8 @@ process.removeAllListeners('warning');
 import { readFileSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { get as httpsGet } from 'https';
+import { get as httpGet } from 'http';
 import Parser from 'rss-parser';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -32,7 +36,10 @@ const CONCURRENCY = 5;
 // --- Feed fetch ---
 const parser = new Parser({
   timeout: TIMEOUT_MS,
-  headers: { 'User-Agent': 'TheNewspaper/1.0 (RSS Aggregator)' },
+  headers: {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  },
 });
 
 const cutoff = new Date(Date.now() - HOURS * 60 * 60 * 1000);
@@ -61,6 +68,36 @@ function withTimeout(promise, ms) {
   });
 }
 
+function fetchRaw(url) {
+  return new Promise((resolve, reject) => {
+    const get = url.startsWith('https') ? httpsGet : httpGet;
+    const req = get(url, { headers: { 'User-Agent': 'TheNewspaper/1.0 (RSS Aggregator)' } }, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => resolve(data));
+    });
+    req.on('error', reject);
+    req.setTimeout(TIMEOUT_MS, () => { req.destroy(); reject(new Error(`Timeout (${TIMEOUT_MS}ms)`)); });
+  });
+}
+
+function sanitizeXml(xml) {
+  return xml
+    // Gecersiz bare & karakterlerini &amp; ile degistir (valid entity'ler haric)
+    .replace(/&(?!(?:#\d+|#x[\da-fA-F]+|[a-zA-Z]\w*);)/g, '&amp;')
+    // HTML boolean attribute'lari duzelt: <img loading> -> <img loading="">
+    .replace(/(<[a-zA-Z][^>]*?)\s+([\w:-]+)(?=[>\s\/])(?!=)/g, '$1 $2=""');
+}
+
+function isXmlError(msg) {
+  return msg && (
+    msg.includes('Invalid character in entity name') ||
+    msg.includes('Attribute without value') ||
+    msg.includes('Unencoded <') ||
+    msg.includes('Invalid attribute name')
+  );
+}
+
 async function fetchFeed(feed) {
   try {
     const result = await withTimeout(parser.parseURL(feed.url), TIMEOUT_MS);
@@ -84,6 +121,30 @@ async function fetchFeed(feed) {
 
     return { feed, items, error: null };
   } catch (err) {
+    // XML parse hatasi alindiysa ham icerik cekip sanitize ederek tekrar dene
+    if (isXmlError(err.message)) {
+      try {
+        const raw = await withTimeout(fetchRaw(feed.url), TIMEOUT_MS);
+        const sanitized = sanitizeXml(raw);
+        const result2 = await parser.parseString(sanitized);
+        const items = [];
+        for (const item of result2.items || []) {
+          const pubDate = item.pubDate || item.isoDate;
+          const date = pubDate ? new Date(pubDate) : null;
+          if (date && date < cutoff) continue;
+          if (!date && items.length >= 3) continue;
+          items.push({
+            title: (item.title || 'Baslıksız').trim(),
+            link: item.link || '',
+            date: date ? date.toISOString().split('T')[0] : 'N/A',
+            summary: stripHtml(item.contentSnippet || item.content || item.description || ''),
+          });
+        }
+        return { feed, items, error: null };
+      } catch (err2) {
+        return { feed, items: [], error: err2.message || String(err2) };
+      }
+    }
     return { feed, items: [], error: err.message || String(err) };
   }
 }
