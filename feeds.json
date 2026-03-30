@@ -182,10 +182,19 @@
         { "name": "The New Stack — Open Source", "url": "https://thenewstack.io/open-source/feed" },
         { "name": "The New Stack — WebAssembly", "url": "https://thenewstack.io/webassembly/feed" },
         { "name": "The New Stack — Containers", "url": "https://thenewstack.io/containers/feed" },
+        { "name": "The New Stack — Serverless", "url": "https://thenewstack.io/serverless/feed" },
+        { "name": "The New Stack — Platform Engineering", "url": "https://thenewstack.io/platform-engineering/feed" },
         { "name": "Rook Blog", "url": "https://blog.rook.io/feed" },
         { "name": "NATS Blog", "url": "https://nats.io/blog/index.xml" },
         { "name": "gRPC Blog", "url": "https://www.grpc.io/blog/index.xml" },
-        { "name": "Ambassador / Emissary Blog", "url": "https://www.getambassador.io/blog/feed.xml" }
+        { "name": "Ambassador / Emissary Blog", "url": "https://www.getambassador.io/blog/feed.xml" },
+        { "name": "Knative Blog", "url": "https://medium.com/feed/knative" },
+        { "name": "Chaos Mesh Blog", "url": "https://chaos-mesh.org/blog/rss.xml" },
+        { "name": "KubeVela Blog", "url": "https://kubevela.io/blog/rss.xml" },
+        { "name": "WasmCloud Blog", "url": "https://wasmcloud.com/blog/rss.xml" },
+        { "name": "Litmus Chaos Blog", "url": "https://medium.com/feed/litmus-chaos" },
+        { "name": "CloudEvents Blog", "url": "https://cloudevents.io/blog/index.xml" },
+        { "name": "The New Stack — CI/CD", "url": "https://thenewstack.io/ci-cd/feed" }
       ]
     },
     {
