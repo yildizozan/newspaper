@@ -194,7 +194,14 @@
         { "name": "WasmCloud Blog", "url": "https://wasmcloud.com/blog/rss.xml" },
         { "name": "Litmus Chaos Blog", "url": "https://medium.com/feed/litmus-chaos" },
         { "name": "CloudEvents Blog", "url": "https://cloudevents.io/blog/index.xml" },
-        { "name": "The New Stack — CI/CD", "url": "https://thenewstack.io/ci-cd/feed" }
+        { "name": "The New Stack — CI/CD", "url": "https://thenewstack.io/ci-cd/feed" },
+        { "name": "The New Stack — Security", "url": "https://thenewstack.io/security/feed" },
+        { "name": "The New Stack — Microservices", "url": "https://thenewstack.io/microservices/feed" },
+        { "name": "The New Stack — DevOps", "url": "https://thenewstack.io/devops/feed" },
+        { "name": "CNCF Contributors Blog", "url": "https://contribute.cncf.io/blog/rss.xml" },
+        { "name": "CNCF TAG Security", "url": "https://tag-security.cncf.io/blog/index.xml" },
+        { "name": "Codefresh Blog", "url": "https://codefresh.io/blog/feed/" },
+        { "name": "Argo Project Blog", "url": "https://medium.com/feed/argo-project" }
       ]
     },
     {
