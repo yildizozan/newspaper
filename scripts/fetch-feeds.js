@@ -27,11 +27,20 @@ function getArg(name, defaultVal) {
   return idx !== -1 && args[idx + 1] ? args[idx + 1] : defaultVal;
 }
 
-const HOURS = parseInt(getArg('hours', '24'), 10);
+const HOURS = getArg('hours', null); // null = bugünün başından itibaren
 const OUTPUT = getArg('output', join(PROJECT_DIR, 'raw-feeds.md'));
 const FEEDS_FILE = join(PROJECT_DIR, 'feeds.json');
 const TIMEOUT_MS = 15_000;
 const CONCURRENCY = 5;
+
+// --hours verilmezse bugün 00:00:00'dan itibaren; verilirse rolling window
+let cutoff;
+if (HOURS !== null) {
+  cutoff = new Date(Date.now() - parseInt(HOURS, 10) * 60 * 60 * 1000);
+} else {
+  cutoff = new Date();
+  cutoff.setHours(0, 0, 0, 0);
+}
 
 // --- Feed fetch ---
 const parser = new Parser({
@@ -41,8 +50,6 @@ const parser = new Parser({
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
   },
 });
-
-const cutoff = new Date(Date.now() - HOURS * 60 * 60 * 1000);
 
 function stripHtml(html) {
   if (!html) return '';
@@ -166,7 +173,8 @@ async function main() {
 
   const lines = [];
   lines.push(`# Ham Feed Verileri — ${today}`);
-  lines.push(`> Otomatik oluşturuldu. Son ${HOURS} saatin içerikleri.`);
+  const windowDesc = HOURS !== null ? `Son ${HOURS} saatin` : `${today} 00:00'dan itibaren bugünün`;
+  lines.push(`> Otomatik oluşturuldu. ${windowDesc} içerikleri.`);
   lines.push('');
 
   const stats = { total: 0, feeds: 0, failed: 0, categories: 0 };
