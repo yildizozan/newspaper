@@ -3,7 +3,7 @@ name: 📰 Run Newspaper
 on:
   schedule:
     # Her gün 08:00 UTC (Türkiye 11:00)
-    - cron: '0 8 * * *'
+    - cron: '0 6 * * *'
   workflow_dispatch:
     inputs:
       hours:
